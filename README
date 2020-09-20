@@ -1,0 +1,4 @@
+Simple HTTP server created for learning purposes. At this moment the project supports only:
+- GET request
+- "close" type of connection (Connection header)
+- file transfer

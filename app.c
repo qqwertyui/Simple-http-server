@@ -2,15 +2,44 @@
 #include <stdio.h>
 #include "http.h"
 #include "socket.h"
+#include <string.h>
 
+const char *ENTRY_MSG = "Waiting for incoming connections...\n";
 
 int main(int argc, char **argv) {
-  const char *document_root = NULL;
-  const char *server_root   = NULL;
+  const char *document_root = NULL, *server_root = NULL;
+  struct log_descriptor *ld = NULL; // getopt always assigns something to it
 
-  if(argc == 3) {
-    document_root = argv[1];
-    server_root   = argv[2];
+  int opt;
+  while((opt = getopt(argc, argv, "d:s:l::") ) != -1) {
+    switch(opt) {
+      case 'd': {
+        document_root = optarg;
+        break;
+      }
+      case 's': {
+        server_root = optarg;
+        break;
+      }
+      case 'l': {
+        if(optarg) { // if filename is given
+          ld = log_init2(optarg);
+        }
+        if(ld == NULL) {
+          fprintf(stdout, "failed to open log file, redirecting to stdout\n");
+        }
+        break;
+      }
+      case '?': { // options without necessary arguments end here (single colon)
+        return 1;
+      }
+    }
+  }
+  /*
+    If not log file is given, then assing log output to stdout
+  */
+  if(ld == NULL) {
+    ld = log_init();
   }
 
   int sfd = socket_init(5000); // timeout interval in ms
@@ -20,18 +49,22 @@ int main(int argc, char **argv) {
   if(socket_listen(sfd, 5) ) {
     return 3;
   }
-  puts("waiting for incoming connections...");
 
+  log_write(ld, ENTRY_MSG, strlen(ENTRY_MSG) );
   while(1) {
     struct Peer_info *pi = socket_client_accept(sfd);
 
-    printf("New connection from %s:%d\n", pi->ip, pi->port);
-    http_init(document_root, server_root);
+    char new_conn[64] = { 0 };
+    sprintf(new_conn, "New connection from %s:%d\n", pi->ip, pi->port);
+    log_write(ld, (const char*)new_conn, strlen(new_conn) );
+
+    http_init(document_root, server_root, ld);
     http_handle_request(pi->fd);
     http_free();
 
     socket_client_release(pi);
   }
+  log_free(ld);
   close(sfd);
   return 0;
 }

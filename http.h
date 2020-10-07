@@ -1,6 +1,7 @@
 #include <stdbool.h>
 #include <stdint.h>
 #include <stddef.h>
+#include "log.h"
 
 #define HTTP_SERVER_VERSION         "1.1"
 #define HTTP_DEFAULT_DOCUMENT_ROOT  "/public_html/"
@@ -47,6 +48,7 @@ struct Http_env_config {
   size_t rootdirsz;
   char *specialdir;
   size_t specialdirsz;
+  struct log_descriptor *ld;
 } http_config;
 
 struct Http_request {
@@ -57,6 +59,6 @@ struct Http_request {
 
 const char *response;
 
-void http_init(const char *doc_root, const char *serv_root);
+void http_init(const char *rootdir, const char *specialdir, struct log_descriptor *ld);
 void http_free(void);
 void http_handle_request(int pfd);

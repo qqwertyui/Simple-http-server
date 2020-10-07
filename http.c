@@ -462,8 +462,10 @@ static struct Http_data* http_read_internal_resource(const char *ptr) {
 /*
   Initializes root directory for web server
 */
-void http_init(const char *rootdir, const char *specialdir) {
+void http_init(const char *rootdir, const char *specialdir, struct log_descriptor *ld) {
   memset(&http_config, 0, sizeof(struct Http_env_config) );
+
+  http_config.ld = ld;
   if(rootdir) {
     http_config.rootdirsz = strlen(rootdir)+1;
     http_config.rootdir = calloc(1, http_config.rootdirsz);
@@ -530,19 +532,18 @@ void http_handle_request(int pfd) {
     http_free_data(hreqd);
     return;
   }
-  write(1, hreqd->data, hreqd->datasz);
-
+  log_write(http_config.ld, (const char*)hreqd->data, hreqd->datasz);
   struct Http_request *hreq = http_parse_request(hreqd);
 
   struct Http_data *hbody;
-  const char *status, *page_path;
-  if((http_resource_is_avalible(hreq->path) ) ) {
-    status = HTTP_STATUS_200;
-    page_path = hreq->path;
-  } else if(!http_check_setup() ) {
+  const char *page_path, *status = NULL;
+  if(!http_check_setup() ) {
     status = HTTP_STATUS_500;
     hbody = http_read_internal_resource(internal_error);
     page_path = http_status_to_page(status);
+  } else if(http_resource_is_avalible(hreq->path) ) { // if any is set
+    status = HTTP_STATUS_200;
+    page_path = hreq->path;
   } else {
     status = HTTP_STATUS_404;
     page_path = http_status_to_page(status);

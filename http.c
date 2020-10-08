@@ -269,7 +269,8 @@ static struct Http_data* http_recieve_request(int pfd) {
       free(hr);
       return NULL;
     }
-    printf("status->%d, idx->%d\n", status, i);
+    // fix it
+    // printf("status->%d, idx->%d\n", status, i);
     if((i % INIT_BUFFER_SIZE) == 0) {
       hr->data = realloc(hr->data, bufcngd*INIT_BUFFER_SIZE);
       bufcngd++;

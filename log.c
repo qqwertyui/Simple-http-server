@@ -37,8 +37,8 @@ void log_write(struct log_descriptor *ld, const char *data, size_t datasz) {
 
   time(&t);
   ti = localtime(&t);
-  asprintf(&buffer, "[%02d:%02d:%02d | %02d:%02d:%d] - ", ti->tm_sec, ti->tm_min,
-                        ti->tm_hour,ti->tm_mday, ti->tm_mon, ti->tm_year+1900);
+  asprintf(&buffer, "[%02d:%02d:%02d | %02d.%02d.%d]\n", ti->tm_sec, ti->tm_min,
+              ti->tm_hour,ti->tm_mday, ti->tm_mon+1, ti->tm_year+1900);
   fwrite(buffer, 1, strlen(buffer), ld->fd);
   fwrite(data, 1, datasz, ld->fd);
   fflush(ld->fd);

@@ -4,6 +4,15 @@
 #include "socket.h"
 #include <string.h>
 
+/*
+  Error constants
+*/
+#define ERR_SUCCESS         0
+#define ERR_WRONG_ARGUMENT  1
+#define ERR_SOCKET_INIT     2
+#define ERR_SOCKET_LISTEN   3
+
+
 const char *ENTRY_MSG = "Waiting for incoming connections...\n";
 
 int main(int argc, char **argv) {
@@ -31,12 +40,13 @@ int main(int argc, char **argv) {
         break;
       }
       case '?': { // options without necessary arguments end here (single colon)
-        return 1;
+        return ERR_WRONG_ARGUMENT;
       }
     }
   }
+
   /*
-    If not log file is given, then assing log output to stdout
+    If not log file is given, then redirect output to stdout
   */
   if(ld == NULL) {
     ld = log_init();
@@ -44,10 +54,10 @@ int main(int argc, char **argv) {
 
   int sfd = socket_init(5000); // timeout interval in ms
   if(sfd < 0) {
-    return 2;
+    return ERR_SOCKET_INIT;
   }
   if(socket_listen(sfd, 5) ) {
-    return 3;
+    return ERR_SOCKET_LISTEN;
   }
 
   log_write(ld, ENTRY_MSG, strlen(ENTRY_MSG) );
@@ -66,5 +76,5 @@ int main(int argc, char **argv) {
   }
   log_free(ld);
   close(sfd);
-  return 0;
+  return ERR_SUCCESS;
 }

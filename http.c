@@ -263,7 +263,7 @@ static struct Http_data* http_recieve_request(int pfd) {
   uint8_t rbuf, crlf_state = 0;
   int bufcngd = 1;
 
-  for(int i=0; recv(pfd, &rbuf, sizeof(uint8_t), 0) != 0; i++) {
+  for(int i=0; recv(pfd, &rbuf, sizeof(uint8_t), 0) != -1; i++) {
     if((i % INIT_BUFFER_SIZE) == 0) {
       hr->data = realloc(hr->data, bufcngd*INIT_BUFFER_SIZE);
       bufcngd++;

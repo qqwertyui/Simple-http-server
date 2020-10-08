@@ -52,7 +52,7 @@ int main(int argc, char **argv) {
     ld = log_init();
   }
 
-  int sfd = socket_init(5000); // timeout interval in ms
+  int sfd = socket_init(5); // timeout interval in seconds/5
   if(sfd < 0) {
     return ERR_SOCKET_INIT;
   }
@@ -63,16 +63,24 @@ int main(int argc, char **argv) {
   log_write(ld, ENTRY_MSG, strlen(ENTRY_MSG) );
   while(1) {
     struct Peer_info *pi = socket_client_accept(sfd);
+    if(pi == NULL) {
+      /*
+        Some error ocurred, try again
+      */
+      continue;
+    }
 
-    char new_conn[64] = { 0 };
-    sprintf(new_conn, "New connection from %s:%d\n", pi->ip, pi->port);
-    log_write(ld, (const char*)new_conn, strlen(new_conn) );
+    char msg_buf[64] = { 0 };
+    sprintf(msg_buf, "New connection from %s:%d\n", pi->ip, pi->port);
+    log_write(ld, (const char*)msg_buf, strlen(msg_buf) );
 
     http_init(document_root, server_root, ld);
     http_handle_request(pi->fd);
     http_free();
-
     socket_client_release(pi);
+
+    sprintf(msg_buf, "Closed connection with %s:%d\n", pi->ip, pi->port);
+    log_write(ld, (const char*)msg_buf, strlen(msg_buf) );
   }
   log_free(ld);
   close(sfd);

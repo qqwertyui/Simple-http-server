@@ -263,7 +263,13 @@ static struct Http_data* http_recieve_request(int pfd) {
   uint8_t rbuf, crlf_state = 0;
   int bufcngd = 1;
 
-  for(int i=0; recv(pfd, &rbuf, sizeof(uint8_t), 0) != -1; i++) {
+  int status = 0;
+  for(int i=0; (status = recv(pfd, &rbuf, sizeof(uint8_t), 0) ) != 0; i++) {
+    if(status == -1) {
+      free(hr);
+      return NULL;
+    }
+    printf("status->%d, idx->%d\n", status, i);
     if((i % INIT_BUFFER_SIZE) == 0) {
       hr->data = realloc(hr->data, bufcngd*INIT_BUFFER_SIZE);
       bufcngd++;
@@ -517,6 +523,7 @@ static bool http_check_setup(void) {
 
 
 static bool http_request_is_empty(struct Http_data *hdata) {
+  if(hdata == NULL) return true;
   return (hdata->datasz) ? false : true;
 }
 
@@ -529,7 +536,9 @@ void http_handle_request(int pfd) {
   struct Http_data *hreqd = http_recieve_request(pfd);
   if(http_request_is_empty(hreqd) ) {
     http_container_free(hheaders);
-    http_free_data(hreqd);
+    if(hreqd) {
+      http_free_data(hreqd);
+    }
     return;
   }
   log_write(http_config.ld, (const char*)hreqd->data, hreqd->datasz);
